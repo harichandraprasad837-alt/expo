@@ -1,24 +1,135 @@
----
-title: Create a project
-description: Learn how to create a new Expo project.
-hideTOC: true
----
+// DDA App - React Native using Expo
 
-import { Terminal } from '~/ui/components/Snippet';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Button, Image, TouchableOpacity, FlatList } from 'react-native';
+import { Audio } from 'expo-av';
 
-System requirements:
+export default function App() {
+  const [sound, setSound] = useState();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState(null);
 
-- [Node.js (LTS)](https://nodejs.org/en/).
-- macOS, Windows (Powershell and [WSL 2](https://expo.fyi/wsl)), and Linux are supported.
+  const musicTracks = [
+    { name: 'Parthiji Song 1', file: require('./assets/parthiji1.mp3') },
+    { name: 'Parthiji Song 2', file: require('./assets/parthiji2.mp3') },
+    { name: 'Parthiji Song 3', file: require('./assets/parthiji3.mp3') }
+  ];
 
-We recommend starting with the default project created by `create-expo-app`. The default project includes example code to help you get started.
+  async function playSound(track) {
+    if (sound) {
+      await sound.unloadAsync();
+      setSound(null);
+      setIsPlaying(false);
+    }
 
-To create a new project, run the following command:
+    const { sound: newSound } = await Audio.Sound.createAsync(track.file);
+    setSound(newSound);
+    await newSound.playAsync();
+    setIsPlaying(true);
+  }
 
-<Terminal cmd={['$ npx create-expo-app@latest']} />
+  async function stopSound() {
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      setSound(null);
+      setIsPlaying(false);
+    }
+  }
 
-> You can choose a different template by adding the [`--template` option](/more/create-expo/#--template).
+  return (
+    <View style={styles.container}>
+      <Image source={require('./assets/dda-logo.png')} style={styles.logo} />
 
-## Next step
+      <Text style={styles.title}>🧘‍♂️ Dhyana Dharma Ashramam</Text>
+      <Text style={styles.subtitle}>A Place for Peace, Silence & Inner Journey</Text>
 
-You have a project. Now it's time to set up your development environment so that you can start developing.
+      <Text style={styles.sectionTitle}>🕒 Unlimited Meditation Timer</Text>
+      <Text style={styles.timer}>🧘 Sit as long as you want...</Text>
+
+      <Text style={styles.sectionTitle}>🎵 Select Parthiji Music</Text>
+      <FlatList
+        data={musicTracks}
+        keyExtractor={(item) => item.name}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.musicButton}
+            onPress={() => {
+              setSelectedTrack(item.name);
+              playSound(item);
+            }}>
+            <Text style={styles.musicText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      {isPlaying && (
+        <Button title="Stop Music" onPress={stopSound} color="#e53935" />
+      )}
+
+      <Text style={styles.sectionTitle}>🧑‍🏫 About Ramu Master</Text>
+      <Text style={styles.about}>
+        Ramu Master is a dedicated spiritual teacher guiding seekers in Dhyana Dharma Ashramam.
+        He has spent decades in deep meditation and teaches Anapanasati Dhyana.
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 50,
+    paddingHorizontal: 20
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+    borderRadius: 60
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#0d47a1',
+    marginBottom: 4
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#1976d2',
+    marginBottom: 20,
+    textAlign: 'center'
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 20,
+    color: '#1565c0'
+  },
+  timer: {
+    fontSize: 16,
+    marginVertical: 10,
+    color: '#424242'
+  },
+  musicButton: {
+    backgroundColor: '#64b5f6',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 6,
+    width: 250,
+    alignItems: 'center'
+  },
+  musicText: {
+    color: '#fff',
+    fontSize: 16
+  },
+  about: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#333333',
+    textAlign: 'center'
+  }
+});
